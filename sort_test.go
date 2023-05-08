@@ -2,7 +2,6 @@ package misc
 
 import (
 	"reflect"
-	"sort"
 	"testing"
 )
 
@@ -149,11 +148,11 @@ func BenchmarkSortStructs(b *testing.B) {
 	}
 
 	for n := 0; n < b.N; n++ {
-		sort.Slice(arr, func(i, j int) bool {
-			if arr[i].Age != arr[j].Age {
-				return arr[i].Age < arr[j].Age
+		Sort(arr, func(i, j Person) bool {
+			if i.Age != j.Age {
+				return i.Age < j.Age
 			}
-			return arr[i].Name < arr[j].Name
+			return i.Name < j.Name
 		})
 	}
 }
