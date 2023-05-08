@@ -1,17 +1,17 @@
 package misc
 
-type number interface {
-	int8 | uint8 | int | uint | int16 | uint16 | int32 | uint32 | int64 | uint64 | float32 | float64
+type Number interface {
+	~int8 | ~uint8 | ~int | ~uint | ~int16 | ~uint16 | ~int32 | ~uint32 | ~int64 | ~uint64 | ~float32 | ~float64
 }
 
-func Max[T number](a, b T) T {
+func Max[T Number](a, b T) T {
 	if a > b {
 		return a
 	}
 	return b
 }
 
-func Min[T number](a, b T) T {
+func Min[T Number](a, b T) T {
 	if a > b {
 		return b
 	}
