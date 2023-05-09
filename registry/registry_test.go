@@ -4,119 +4,68 @@ import (
 	"testing"
 )
 
+func TestNewRegistry(t *testing.T) {
+	r := New[int, *User](1)
+	if r.Count() != 0 {
+		t.Errorf("Expected 0 got %d", r.Count())
+	}
+}
+
 type User struct {
-	ID int
+	ID   int
+	Name string
 }
 
 func (u *User) Primary() int {
 	return u.ID
 }
 
-func TestRegister(t *testing.T) {
-	r := &Registry[int, *User]{}
-	r.Init(10)
-
-	// add a user
-	user := &User{ID: 1}
-	r.Register(user)
-
-	// check if the user is added
-	if r.Query(user.ID) != user {
-		t.Error("User not registered")
+func TestRegisterAndQuery(t *testing.T) {
+	r := New[int, *User](1)
+	r.Register(&User{ID: 1, Name: "hello"})
+	if r.Count() != 1 {
+		t.Errorf("Expected 1, got %d", r.Count())
+	}
+	if v := r.Query(1); v == nil || v.Name != "hello" {
+		t.Errorf("Expected 'hello', got '%v'", v)
 	}
 }
 
 func TestUnregister(t *testing.T) {
-	r := &Registry[int, *User]{}
-
-	r.Init(10)
-
-	// add a user
-	user := &User{ID: 1}
-	r.Register(user)
-
-	// remove the user
-	r.Unregister(user)
-
-	// check if the user is removed
-	if r.Query(user.ID) != nil {
-		t.Error("User not unregistered")
+	r := New[int, *User](1)
+	u := &User{ID: 1, Name: "hello"}
+	r.Register(u)
+	if r.Count() != 1 {
+		t.Errorf("Expected 1, got %d", r.Count())
 	}
-
+	r.Unregister(u)
 	if r.Count() != 0 {
-
-		t.Error("User not unregistered")
-
-	}
-}
-
-func TestQuery(t *testing.T) {
-	r := &Registry[int, *User]{}
-
-	r.Init(10)
-
-	// add a user
-	user := &User{ID: 1}
-	r.Register(user)
-
-	// query the user
-	user2 := r.Query(user.ID)
-
-	// check if the user is found
-	if user2 != user {
-		t.Error("User not found")
+		t.Errorf("Expected 0, got %d", r.Count())
 	}
 }
 
 func TestAll(t *testing.T) {
-	r := &Registry[int, *User]{}
-
-	r.Init(10)
-
-	// add some users
-	user1 := &User{ID: 1}
-	user2 := &User{ID: 2}
-	user3 := &User{ID: 3}
-	r.Register(user1)
-	r.Register(user2)
-	r.Register(user3)
-
-	// query all users
+	r := New[int, *User](3)
+	r.Register(&User{ID: 1, Name: "hello"})
+	r.Register(&User{ID: 2, Name: "world"})
+	r.Register(&User{ID: 3, Name: "!"})
+	if r.Count() != 3 {
+		t.Errorf("Expected 3, got %d", r.Count())
+	}
 	all := r.All()
+	if len(all) != 3 {
+		t.Errorf("Expected 3, got %d", len(all))
+	}
 
-	// check if all users are found
-	if len(all) != 3 || !contains(all, user1.ID) || !contains(all, user2.ID) || !contains(all, user3.ID) {
-		t.Error("All users not found")
+	if all[0] != 1 || all[1] != 2 || all[2] != 3 {
+		t.Errorf("Expected 1,2,3, got %d, %d, %d", all[0], all[1], all[2])
 	}
 }
 
-func TestCount(t *testing.T) {
-	r := &Registry[int, *User]{}
-
-	r.Init(10)
-
-	// add some users
-	user1 := &User{ID: 1}
-	user2 := &User{ID: 2}
-	user3 := &User{ID: 3}
-	r.Register(user1)
-	r.Register(user2)
-	r.Register(user3)
-
-	// query the count
-	count := r.Count()
-
-	// check if the count is correct
-	if count != 3 {
-		t.Error("Incorrect count")
+func TestQueryNotExist(t *testing.T) {
+	r := New[int, *User](1)
+	v := r.Query(1)
+	if v != nil {
+		t.Errorf("Expected '', got '%v'", v)
 	}
-}
-
-func contains(ids []int, id int) bool {
-	for _, v := range ids {
-		if v == id {
-			return true
-		}
-	}
-	return false
 }

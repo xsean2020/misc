@@ -20,11 +20,22 @@ func (r *Registry[T, V]) Init(caps int) {
 	r.records = make([]V, 0, caps)
 }
 
+func New[T comparable, V Object[T]](_cap int) *Registry[T, V] {
+	var r = new(Registry[T, V])
+	r.Init(_cap)
+	return r
+}
+
 // register a user
 func (r *Registry[T, V]) Register(v V) {
 	r.Lock()
-	r.indices[v.Primary()] = len(r.records)
-	r.records = append(r.records, v)
+	// 如果存在直接覆盖掉
+	if idx, ok := r.indices[v.Primary()]; ok {
+		r.records[idx] = v
+	} else {
+		r.indices[v.Primary()] = len(r.records)
+		r.records = append(r.records, v)
+	}
 	r.Unlock()
 }
 
@@ -61,10 +72,11 @@ func (r *Registry[T, V]) Query(id T) (x V) {
 
 // query all user
 func (r *Registry[T, V]) All() []T {
+	// 按顺序给出结果
 	all := make([]T, 0)
 	r.RLock()
-	for k, _ := range r.indices {
-		all = append(all, k)
+	for _, v := range r.records {
+		all = append(all, v.Primary())
 	}
 	r.RUnlock()
 	return all
