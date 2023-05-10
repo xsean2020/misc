@@ -4,24 +4,43 @@ import (
 	"testing"
 )
 
-func A() int32 {
-	return 1
+type User struct {
+	a int32
+	b int32
 }
 
-func B() int32 {
-	return 2
+func (u *User) A() int32 {
+	return u.a
+}
+
+func (u *User) B() int32 {
+	return u.b
+}
+
+func Benchmark_ternaray3(b *testing.B) {
+	var u = &User{a: 10, b: 20}
+	for i := 0; i < b.N; i++ {
+		if true {
+			u.A()
+		} else {
+			u.B()
+		}
+	}
 }
 
 func Benchmark_ternaray1(b *testing.B) {
+	var u = &User{a: 10, b: 20}
+
 	for i := 0; i < b.N; i++ {
-		Ternary(true, A(), B())
+		Ternary(true, u.A(), u.B())
 	}
 }
 
 func Benchmark_ternaray2(b *testing.B) {
+	var u = &User{a: 10, b: 20}
 
 	for i := 0; i < b.N; i++ {
-		Ternary(true, A, B)()
+		Ternary(true, u.A, u.B)()
 	}
 }
 

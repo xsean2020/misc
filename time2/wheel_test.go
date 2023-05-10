@@ -25,6 +25,16 @@ func TestTicker(t *testing.T) {
 	w.Stop()
 }
 
+func TestNewTicker(t *testing.T) {
+	w := NewWheel(100 * time.Millisecond)
+	ticker := w.NewTicker(time.Millisecond*500, 10*time.Millisecond)
+	<-ticker.C
+	if ticker.C == nil {
+		t.Errorf("ticker was not triggered")
+	}
+	w.Stop()
+}
+
 func TestAfterFunc(t *testing.T) {
 	w := NewWheel(time.Millisecond)
 	var count int

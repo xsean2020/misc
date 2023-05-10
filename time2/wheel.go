@@ -248,6 +248,10 @@ func sendTime(t time.Time, arg interface{}) {
 }
 
 func (w *Wheel) TickFunc(d time.Duration, period time.Duration, f func()) *Ticker {
+	if period < w.tick {
+		panic("period(" + period.String() + ") less than tick(" + w.tick.String() + ")")
+	}
+
 	t := &Ticker{
 		r: w.newTimer(d, period, func(_ time.Time, _ interface{}) {
 			w.cfg.Submit(f)
@@ -279,6 +283,10 @@ func (w *Wheel) NewTimer(d time.Duration) *Timer {
 }
 
 func (w *Wheel) NewTicker(d time.Duration, p time.Duration) *Ticker {
+	if p < w.tick {
+		panic("period(" + p.String() + ") less than tick(" + w.tick.String() + ")")
+	}
+
 	c := make(chan time.Time, 1)
 	t := &Ticker{
 		C: c,
