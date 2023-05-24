@@ -36,6 +36,14 @@ func Benchmark_ternaray1(b *testing.B) {
 	}
 }
 
+func Benchmark_ternaray4(b *testing.B) {
+	var u = &User{a: 10, b: 20}
+
+	for i := 0; i < b.N; i++ {
+		Ternary(true, u, u).A()
+	}
+}
+
 func Benchmark_ternaray2(b *testing.B) {
 	var u = &User{a: 10, b: 20}
 

@@ -11,6 +11,8 @@ import (
 	"unsafe"
 )
 
+var JSONEscape = strings.NewReplacer("\f", "", "\b", "", "\n", "", "\r", "", "\t", "", `"`, `\"`, `\`, `\\`).Replace
+
 //go:linkname Nanotime runtime.nanotime1
 func Nanotime() int64
 
