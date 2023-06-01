@@ -11,7 +11,14 @@ import (
 	"unsafe"
 )
 
-var JSONEscape = strings.NewReplacer("\f", "", "\b", "", "\n", "", "\r", "", "\t", "", `"`, `\"`, `\`, `\\`).Replace
+var JSONEscape = strings.NewReplacer(
+	"\f", "",
+	"\b", "",
+	"\n", "",
+	"\r", "",
+	"\t", "",
+	`"`, `\"`,
+	`\`, `\\`).Replace
 
 //go:linkname Nanotime runtime.nanotime1
 func Nanotime() int64
@@ -24,6 +31,10 @@ func String2Bytes(s string) []byte {
 
 func Bytes2String(bts []byte) string {
 	return *(*string)(unsafe.Pointer(&bts))
+}
+
+func Array2String[T any](array []T, delim string) string {
+	return strings.Trim(strings.Replace(fmt.Sprint(array), " ", delim, -1), "[]")
 }
 
 var (
