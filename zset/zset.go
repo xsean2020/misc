@@ -645,6 +645,7 @@ func (z *SortedSet[T, C, N]) GetDataByRank(rank int64, reverse bool) (key C, sco
 
 // Range implements ZRANGE
 // RevRange implements ZREVRANGE
+// NOTICE: 以0开始
 func (z *SortedSet[T, C, N]) Range(start, end int64, reverse bool, f func(C, N, T)) {
 	z.RLock()
 	defer z.RUnlock()
@@ -652,6 +653,7 @@ func (z *SortedSet[T, C, N]) Range(start, end int64, reverse bool, f func(C, N, 
 }
 
 // Range by score
+// NOTICE: 闭区间
 func (z *SortedSet[T, C, N]) RangeByScore(min, max N, reverse bool, f func(C, N, T)) {
 	z.RLock()
 	defer z.RUnlock()
