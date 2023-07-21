@@ -502,7 +502,7 @@ func (zsl *skipList[T, C, N]) zslGetElementByRank(rank uint64) *skipListNode[C, 
  *----------------------------------------------------------------------------*/
 
 // New creates a new SortedSet and return its pointer
-func New[T any, C Comparable, N Number]() *SortedSet[T, C, N] {
+func New[C Comparable, N Number, T any]() *SortedSet[T, C, N] {
 	s := &SortedSet[T, C, N]{
 		dict: make(map[C]*obj[T, C, N]),
 		zsl:  zslCreate[T, C, N](),
@@ -645,21 +645,21 @@ func (z *SortedSet[T, C, N]) GetDataByRank(rank int64, reverse bool) (key C, sco
 
 // Range implements ZRANGE
 // RevRange implements ZREVRANGE
-func (z *SortedSet[T, C, N]) Range(start, end int64, reverse bool, f func(N, C, T)) {
+func (z *SortedSet[T, C, N]) Range(start, end int64, reverse bool, f func(C, N, T)) {
 	z.RLock()
 	defer z.RUnlock()
 	z.commonRange(start, end, reverse, f)
 }
 
 // Range by score
-func (z *SortedSet[T, C, N]) RangeByScore(min, max N, reverse bool, f func(N, C, T)) {
+func (z *SortedSet[T, C, N]) RangeByScore(min, max N, reverse bool, f func(C, N, T)) {
 	z.RLock()
 	defer z.RUnlock()
 	z.scoreRange(min, max, reverse, f)
 }
 
 // Range by score
-func (z *SortedSet[T, C, N]) scoreRange(min, max N, reverse bool, f func(N, C, T)) {
+func (z *SortedSet[T, C, N]) scoreRange(min, max N, reverse bool, f func(C, N, T)) {
 	var node *skipListNode[C, N]
 	var zran = &zrangespec[N]{min: min, max: max}
 	if reverse {
@@ -675,7 +675,7 @@ func (z *SortedSet[T, C, N]) scoreRange(min, max N, reverse bool, f func(N, C, T
 		if (reverse && node.score < min) || node.score > max {
 			return
 		}
-		f(node.score, node.objID, z.dict[node.objID].attachment)
+		f(node.objID, node.score, z.dict[node.objID].attachment)
 		if reverse {
 			node = node.backward
 		} else {
@@ -684,7 +684,7 @@ func (z *SortedSet[T, C, N]) scoreRange(min, max N, reverse bool, f func(N, C, T
 	}
 }
 
-func (z *SortedSet[T, C, N]) commonRange(start, end int64, reverse bool, f func(N, C, T)) {
+func (z *SortedSet[T, C, N]) commonRange(start, end int64, reverse bool, f func(C, N, T)) {
 	l := z.zsl.length
 	if start < 0 {
 		start += l
@@ -720,7 +720,7 @@ func (z *SortedSet[T, C, N]) commonRange(start, end int64, reverse bool, f func(
 		span--
 		k := node.objID
 		s := node.score
-		f(s, k, z.dict[k].attachment)
+		f(k, s, z.dict[k].attachment)
 		if reverse {
 			node = node.backward
 		} else {
