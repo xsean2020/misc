@@ -8,6 +8,19 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// 8171 years 才会用完
+const shift = 32
+const mask = (1 << shift) - 1
+
+// 一分钟之内分数相同可以忽略不计，玩家看不出来
+func NewScore(val int32) float64 {
+	return float64(int64(val)<<shift | time.Now().Unix()/60)
+}
+
+func ParseVal(f float64) int32 {
+	return int32(int64(f) >> shift)
+}
+
 // Leaderboard encapsulates leaderboard-related functionality
 type Leaderboard struct {
 	client *redis.Client
@@ -23,11 +36,13 @@ func NewLeaderboard(addr, password string, db int) (*Leaderboard, error) {
 		Password: password,
 		DB:       db,
 	}
+
 	client := redis.NewClient(opt)
 	err := client.Ping().Err()
 	if err != nil {
 		return nil, fmt.Errorf("connect to redis failed: %v", err)
 	}
+
 	lb := &Leaderboard{client, opt, sync.RWMutex{}, make(chan struct{})}
 	go lb.checkAndReconnect()
 	return lb, nil
@@ -67,6 +82,21 @@ func (lb *Leaderboard) checkAndReconnect() {
 	}
 }
 
+func (lb *Leaderboard) Incr(name, id string, incr float64) error {
+	lb.mu.RLock()
+	defer lb.mu.RUnlock()
+	// 执行lua 脚本
+	return lb.client.Eval(`
+	    local score =  redis.call('zscore', KEYS[1], ARGV[2])
+		if score  then
+		   score = score - score% ARGV[3]
+		   ARGV[1] = ARGV[1] +score
+		end
+		return redis.call('zadd', KEYS[1], ARGV[1], ARGV[2])
+	`, []string{name}, incr, id, mask).Err()
+
+}
+
 // CreateLeaderboard creates a leaderboard with the given name and sets the expiration time
 func (lb *Leaderboard) CreateLeaderboard(name string, expirationTime time.Time) error {
 	lb.mu.RLock()
@@ -78,8 +108,8 @@ func (lb *Leaderboard) CreateLeaderboard(name string, expirationTime time.Time) 
 	return err
 }
 
-// UpdateScore updates a player's score in the specified leaderboard
-func (lb *Leaderboard) UpdateScore(name, id string, score int) error {
+// UpdateScore updates a player's score in the specifiedferboard
+func (lb *Leaderboard) Set(name, id string, score float64) error {
 	lb.mu.RLock()
 	defer lb.mu.RUnlock()
 	return lb.client.ZAdd(name, redis.Z{Score: float64(score), Member: id}).Err()
