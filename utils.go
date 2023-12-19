@@ -101,3 +101,15 @@ func PrintPanicStack(recv func(string)) {
 		}
 	}
 }
+
+func ToCamelCase(input string) string {
+	// 将输入字符串按下划线分隔成切片
+	words := strings.Split(input, "_")
+	// 对每个单词进行处理
+	for i := 0; i < len(words); i++ {
+		// 将单词的首字母转换为大写，其他字母保持不变
+		words[i] = strings.Title(words[i])
+	}
+	// 将处理后的单词拼接成驼峰式名称
+	return strings.Join(words, "")
+}
