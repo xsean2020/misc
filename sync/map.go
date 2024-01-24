@@ -9,12 +9,14 @@ import (
 type Map[K comparable, V any] struct {
 	data map[K]V
 	sync.RWMutex
+	once sync.Once
 }
 
-func NewMap[K comparable, V any]() *Map[K, V] {
-	var mp = Map[K, V]{}
-	mp.data = make(map[K]V, 1000)
-	return &mp
+func (m *Map[K, V]) init() {
+	if m.data != nil {
+		return
+	}
+	m.data = make(map[K]V, 1024)
 }
 
 func (m *Map[K, V]) Get(k K) (V, bool) {
@@ -26,12 +28,14 @@ func (m *Map[K, V]) Get(k K) (V, bool) {
 
 func (m *Map[K, V]) Keys() []K {
 	m.RLock()
-	defer m.RUnlock()
-	return maps.Keys(m.data)
+	keys := maps.Keys(m.data)
+	m.RUnlock()
+	return keys
 }
 
 func (m *Map[K, V]) Set(k K, v V) {
 	m.Lock()
+	m.once.Do(m.init) // 初始化一次
 	m.data[k] = v
 	m.Unlock()
 }
