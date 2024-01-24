@@ -1,36 +1,56 @@
 package sync
 
-import pkg "sync"
+import (
+	"sync"
+
+	"golang.org/x/exp/maps"
+)
 
 type Map[K comparable, V any] struct {
-	m pkg.Map
+	data map[K]V
+	sync.RWMutex
 }
 
-func (m *Map[K, V]) Delete(key K) { m.m.Delete(key) }
+func NewMap[K comparable, V any]() *Map[K, V] {
+	var mp = Map[K, V]{}
+	mp.data = make(map[K]V, 1000)
+	return &mp
+}
 
-func (m *Map[K, V]) Load(key K) (value V, ok bool) {
-	v, ok := m.m.Load(key)
+func (m *Map[K, V]) Get(k K) (V, bool) {
+	m.RLock()
+	ret, ok := m.data[k]
+	m.RUnlock()
+	return ret, ok
+}
+
+func (m *Map[K, V]) Keys() []K {
+	m.RLock()
+	defer m.RUnlock()
+	return maps.Keys(m.data)
+}
+
+func (m *Map[K, V]) Set(k K, v V) {
+	m.Lock()
+	m.data[k] = v
+	m.Unlock()
+}
+
+func (m *Map[K, V]) Delete(k K) {
+	m.Lock()
+	delete(m.data, k)
+	m.Unlock()
+}
+
+func (m *Map[K, V]) DeleteEqual(k K, v V, equal func(v1, v2 V) bool) {
+	m.Lock()
+	defer m.Unlock()
+	t, ok := m.data[k]
 	if !ok {
-		return value, ok
+		return
 	}
-	return v.(V), ok
-}
-
-func (m *Map[K, V]) LoadAndDelete(key K) (value V, loaded bool) {
-	v, loaded := m.m.LoadAndDelete(key)
-	if !loaded {
-		return value, loaded
+	if !equal(t, v) {
+		return
 	}
-	return v.(V), loaded
+	delete(m.data, k)
 }
-
-func (m *Map[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
-	a, loaded := m.m.LoadOrStore(key, value)
-	return a.(V), loaded
-}
-
-func (m *Map[K, V]) Range(f func(key K, value V) bool) {
-	m.m.Range(func(key, value any) bool { return f(key.(K), value.(V)) })
-}
-
-func (m *Map[K, V]) Store(key K, value V) { m.m.Store(key, value) }
