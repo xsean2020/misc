@@ -26,7 +26,7 @@ func TestTicker(t *testing.T) {
 }
 
 func TestNewTicker(t *testing.T) {
-	w := NewWheel(100 * time.Millisecond)
+	w := NewWheel(10 * time.Millisecond)
 	ticker := w.NewTicker(time.Millisecond*500, 10*time.Millisecond)
 	<-ticker.C
 	if ticker.C == nil {

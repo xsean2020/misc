@@ -26,7 +26,8 @@ type timer struct {
 	f       func(time.Time, interface{})
 	arg     interface{} //
 	w       *Wheel
-	vec     []*timer
+	vecs    [][]*timer
+	pos     uint64
 	index   int
 
 	sync.RWMutex
@@ -48,7 +49,7 @@ type Wheel struct {
 	cfg     config
 }
 
-//tick is the time for a jiffies
+// tick is the time for a jiffies
 func NewWheel(tick time.Duration, opts ...Option) *Wheel {
 	w := new(Wheel)
 	w.quit = make(chan struct{})
@@ -112,7 +113,8 @@ func (w *Wheel) unsafeAdd(t *timer) {
 	}
 
 	tv[i] = append(tv[i], t)
-	t.vec = tv[i]
+	t.vecs = tv
+	t.pos = i
 	t.index = len(tv[i]) - 1
 }
 
@@ -182,7 +184,7 @@ func (w *Wheel) addTimer(t *timer) {
 
 func (w *Wheel) delTimer(t *timer) {
 	w.Lock()
-	vec := t.vec
+	vec := t.vecs[t.pos]
 	index := t.index
 	if len(vec) > index && vec[index] == t {
 		vec[index] = nil
