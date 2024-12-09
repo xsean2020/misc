@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"path"
-	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -24,13 +23,14 @@ var JSONEscape = strings.NewReplacer(
 func Nanotime() int64
 
 func String2Bytes(s string) []byte {
-	var buf = *(*[]byte)(unsafe.Pointer(&s))
-	(*reflect.SliceHeader)(unsafe.Pointer(&buf)).Cap = len(s)
-	return buf
+	return unsafe.Slice(unsafe.StringData(s), len(s))
 }
 
 func Bytes2String(bts []byte) string {
-	return *(*string)(unsafe.Pointer(&bts))
+	if len(bts) == 0 {
+		return ""
+	}
+	return unsafe.String(&bts[0], len(bts))
 }
 
 func Array2String[T any](array []T, delim string) string {
